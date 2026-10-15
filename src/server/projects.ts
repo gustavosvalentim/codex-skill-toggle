@@ -56,6 +56,7 @@ export class Projects {
 
   async init() {
     if (!this.store) return;
+    this.errors.length = 0;
     try {
       const data = JSON.parse(await readFile(this.store, "utf8"));
       if (!Array.isArray(data) || !data.every((p) => typeof p?.cwd === "string" && isAbsolute(p.cwd) && typeof p.id === "string" && typeof p.name === "string")) throw new Error("Invalid project list");
@@ -80,6 +81,7 @@ export class Projects {
   async add(path: string) {
     const project = await this.project(path);
     const run = this.saving.then(async () => {
+      await this.init();
       const next = [...this.remembered.filter((p) => p.cwd !== project.cwd), project];
       if (this.store) {
         await mkdir(dirname(this.store), { recursive: true });

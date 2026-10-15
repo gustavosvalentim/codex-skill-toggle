@@ -92,3 +92,22 @@ test("explicit folder selection persists, but does not become the global default
     assert.equal(bad.isError, true);
   }
 });
+
+
+test("running panels refresh folders registered by another server without losing existing folders", async (t) => {
+  const f = await fixture(t);
+  const first = await f.connect(); const second = await f.connect();
+  assert.deepEqual((await f.call(first)).structuredContent.projects, []);
+  assert.deepEqual((await f.call(second)).structuredContent.projects, []);
+  const addedA = await first.callTool({ name: "add_project", arguments: { path: f.dirs.a } });
+  const refreshed = await f.call(second);
+  assert.ok(refreshed.structuredContent.projects.some(p => p.id === addedA.structuredContent.context.selectedProjectId));
+  assert.equal(refreshed.structuredContent.context.selectedProjectId, null);
+  const selected = await f.call(second, undefined, { projectId: addedA.structuredContent.context.selectedProjectId });
+  assert.deepEqual(selected.structuredContent.skills.map(s => s.name), ["project-a"]);
+  await second.callTool({ name: "add_project", arguments: { path: f.dirs.b } });
+  const both = await f.call(first);
+  assert.deepEqual(both.structuredContent.projects.map(p => p.cwd).sort(), [f.dirs.a, f.dirs.b].sort());
+  const saved = JSON.parse(await readFile(join(f.root, "state/skill-toggle/projects.json"), "utf8"));
+  assert.deepEqual(saved.map(p => p.cwd).sort(), [f.dirs.a, f.dirs.b].sort());
+});

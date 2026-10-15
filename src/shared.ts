@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const APP_NAME = "Skill Toggle";
-export const APP_VERSION = "0.3.1";
-export const UI_URI = "ui://skill-toggle/manager-v6.html";
+export const APP_VERSION = "0.3.2";
+export const UI_URI = "ui://skill-toggle/manager-v7.html";
 export const OPEN_TOOL = "open_skill_toggle";
 export const CHECK_TOOL = "check_connection";
 export const LIST_TOOL = "list_skills";

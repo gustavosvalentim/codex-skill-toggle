@@ -38,7 +38,7 @@ function accept(next: SkillList) {
   project.hidden = data.projects.length === 0;
   project.value = selection;
   if (project.selectedIndex < 0) { selection = ""; project.value = ""; }
-  projectContext.textContent = data.context?.directory ? `Project: ${data.context.directory}` : "Select a project folder to include project skills.";
+  projectContext.textContent = data.context?.directory ? `Project: ${data.context.directory}` : "No project detected. Select a saved folder or use Add project.";
   render();
 }
 

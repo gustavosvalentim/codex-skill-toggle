@@ -13,6 +13,7 @@ const projects = new Projects(config, configIndex >= 0 ? null : projectStore());
 await projects.init();
 const manager = new SkillManager(config);
 async function listSkills(input: { projectId?: string; personalOnly?: boolean }, threadId: unknown) {
+  await projects.init();
   const current = await projects.current(threadId);
   const selectedId = input.personalOnly ? null : input.projectId ?? current?.id ?? null;
   const data = await manager.list(selectedId);
