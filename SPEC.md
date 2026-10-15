@@ -63,7 +63,7 @@ A locally configured MCP server is sufficient for the integration spike. Plugin 
 
 ### `list_skills`
 
-Input: optional configured project identifier. Do not accept an arbitrary filesystem path from the UI.
+Input: optional registered project identifier or a personal-only selection. Register explicit folder paths through the separate app-only add_project tool, which validates an absolute existing directory. Automatic selection resolves host-provided thread metadata through a metadata-only local app-server lookup.
 
 Output: a list of skills with stable IDs, names, descriptions, scope, display paths, policy state, editability, and any discovery errors. Include a revision token for each editable policy file.
 
@@ -195,3 +195,8 @@ Package the validated local server and UI for installation. Document supported d
 - [MCP App UI integration](https://developers.openai.com/plugins/build/chatgpt-ui)
 - [Codex App Server](https://learn.chatgpt.com/docs/app-server)
 - [Plugin packaging](https://developers.openai.com/plugins/build/plugins)
+
+
+## Project context — version 0.3.0
+
+Conversation panels can use MCP request threadId metadata to resolve a saved local chat's directory through thread/read without loading turns. Global, internal ephemeral, unresolved, and projectless contexts default to personal/system skills. Explicit folder registration is available in both surfaces, persists in the packaged plugin's local preference file, and does not change invocation policy. Each request selects its project independently; refresh rechecks the chat directory. The UI shows the selected path and supports personal-only and current-chat choices. Native conversation-menu delivery remains dependent on desktop metadata support; the picker is always available.

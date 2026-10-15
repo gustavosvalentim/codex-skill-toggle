@@ -9,6 +9,11 @@ const scope = document.querySelector<HTMLSelectElement>("#scope")!;
 const project = document.querySelector<HTMLSelectElement>("#project")!;
 const refresh = document.querySelector<HTMLButtonElement>("#refresh")!;
 const count = document.querySelector<HTMLElement>("#count")!;
+const addProject = document.querySelector<HTMLButtonElement>("#add-project")!;
+const projectForm = document.querySelector<HTMLFormElement>("#project-form")!;
+const projectPath = document.querySelector<HTMLInputElement>("#project-path")!;
+const projectContext = document.querySelector<HTMLElement>("#project-context")!;
+let selection = "";
 let data: SkillList = { skills: [], projects: [], errors: [] };
 let connected = false;
 let loading = false;
@@ -26,10 +31,13 @@ async function expand() {
 
 function accept(next: SkillList) {
   data = next;
-  const selected = project.value;
-  project.replaceChildren(new Option("All projects", ""), ...data.projects.map((p) => new Option(p.name, p.id)));
-  project.value = selected;
-  project.hidden = data.projects.length === 0;
+  const current = data.projects.find((p) => p.id === data.context?.currentProjectId);
+  project.replaceChildren(new Option(current ? `Current chat: ${current.name}` : "Personal and system", ""),
+    ...(current ? [new Option("Personal and system", "__personal")] : []),
+    ...data.projects.map((p) => new Option(p.cwd ? `${p.name} — ${p.cwd}` : p.name, p.id)));
+  project.value = selection;
+  if (project.selectedIndex < 0) { selection = ""; project.value = ""; }
+  projectContext.textContent = data.context?.directory ? `Project: ${data.context.directory}` : "Select a project folder to include project skills.";
   render();
 }
 
@@ -38,7 +46,7 @@ function render() {
   const skills = data.skills.filter((s) => (scope.value === "all" || s.scope === scope.value) && `${s.name} ${s.description} ${s.path}`.toLocaleLowerCase().includes(query));
   count.textContent = `${skills.length} of ${data.skills.length} skills`;
   list.replaceChildren();
-  if (!skills.length) list.append(element("p", data.skills.length ? "No skills match these filters." : "No skills found in the configured roots."));
+  if (!skills.length) list.append(element("p", scope.value === "project" && !data.context?.selectedProjectId ? "Select a project folder to see project skills." : data.skills.length ? "No skills match these filters." : "No skills found in the configured roots."));
   for (const skill of skills) {
     const row = element("article"); row.className = "skill";
     const content = element("div"); content.className = "skill-content";
@@ -61,20 +69,20 @@ function render() {
 
 async function load() {
   if (!connected || loading || saving.size) return;
-  loading = true; refresh.disabled = true; project.disabled = true; render();
+  loading = true; refresh.disabled = true; project.disabled = true; addProject.disabled = true; render();
   message("Reading skill settings…");
   try {
-    const result = await app.callServerTool({ name: LIST_TOOL, arguments: project.value ? { projectId: project.value } : {} }, { timeout: 20_000 });
+    const result = await app.callServerTool({ name: LIST_TOOL, arguments: selection === "__personal" ? { personalOnly: true } : selection ? { projectId: selection } : {} }, { timeout: 20_000 });
     if (result.isError) throw new Error(result.content.filter((c) => c.type === "text").map((c) => c.text).join(" "));
     accept(ListOutput.parse(result.structuredContent));
     message(data.errors.length ? `Some roots could not be read: ${data.errors.join("; ")}` : "Settings are read from disk. Changes are verified before reporting success.", data.errors.length > 0);
   } catch (error) { message(error instanceof Error ? error.message : "Could not load skills.", true); }
-  finally { loading = false; refresh.disabled = false; project.disabled = false; render(); }
+  finally { loading = false; refresh.disabled = false; project.disabled = false; addProject.disabled = false; render(); }
 }
 
 async function save(skill: Skill, allowed: boolean) {
   if (saving.has(skill.id)) return;
-  saving.add(skill.id); refresh.disabled = true; project.disabled = true; render();
+  saving.add(skill.id); refresh.disabled = true; project.disabled = true; addProject.disabled = true; render();
   message(`Saving ${skill.name}…`);
   try {
     const result = await app.callServerTool({ name: SET_TOOL, arguments: { skillId: skill.id, allowed, expectedRevision: skill.revision } }, { timeout: 20_000 });
@@ -83,17 +91,41 @@ async function save(skill: Skill, allowed: boolean) {
     data.skills = data.skills.map((s) => s.id === skill.id ? saved.skill : s);
     message(saved.refreshGuidance);
   } catch (error) { message(error instanceof Error ? error.message : "Save failed. Refresh and try again.", true); }
-  finally { saving.delete(skill.id); refresh.disabled = saving.size > 0; project.disabled = saving.size > 0; render(); }
+  finally { saving.delete(skill.id); refresh.disabled = saving.size > 0; project.disabled = saving.size > 0; addProject.disabled = saving.size > 0; render(); }
 }
 
 search.addEventListener("input", render);
 scope.addEventListener("change", render);
-project.addEventListener("change", () => { void load(); });
+project.addEventListener("change", () => { selection = project.value; void load(); });
+addProject.addEventListener("click", () => { projectForm.hidden = false; projectPath.focus(); });
+document.querySelector("#cancel-project")!.addEventListener("click", () => { projectForm.hidden = true; });
+projectForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (!connected || loading || saving.size) return;
+  void (async () => {
+    loading = true; refresh.disabled = true; project.disabled = true; addProject.disabled = true;
+    for (const button of projectForm.querySelectorAll("button")) button.disabled = true;
+    render(); message("Opening project folder…");
+    try {
+      const result = await app.callServerTool({ name: "add_project", arguments: { path: projectPath.value.trim() } }, { timeout: 20_000 });
+      if (result.isError) throw new Error(result.content.filter((c) => c.type === "text").map((c) => c.text).join(" "));
+      const next = ListOutput.parse(result.structuredContent);
+      selection = next.context?.selectedProjectId ?? ""; accept(next);
+      projectForm.hidden = true; projectPath.value = "";
+      message(next.errors.length ? next.errors.join("; ") : "Project folder selected.", next.errors.length > 0);
+    } catch (error) { message(error instanceof Error ? error.message : "Could not open project folder.", true); }
+    finally {
+      loading = false; refresh.disabled = false; project.disabled = false; addProject.disabled = false;
+      for (const button of projectForm.querySelectorAll("button")) button.disabled = false;
+      render();
+    }
+  })();
+});
 refresh.addEventListener("click", () => { void load(); });
 app.onhostcontextchanged = theme;
 app.ontoolresult = (result) => {
   const parsed = ListOutput.safeParse(result.structuredContent);
-  if (parsed.success && !saving.size) accept(parsed.data);
+  if (parsed.success && !saving.size && !loading) accept(parsed.data);
   // Reopen a retained inline instance when the launch tool is called again.
   if (connected) void expand();
 };

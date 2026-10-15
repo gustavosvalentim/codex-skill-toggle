@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const APP_NAME = "Skill Toggle";
-export const APP_VERSION = "0.2.6";
-export const UI_URI = "ui://skill-toggle/manager-v4.html";
+export const APP_VERSION = "0.3.0";
+export const UI_URI = "ui://skill-toggle/manager-v5.html";
 export const OPEN_TOOL = "open_skill_toggle";
 export const CHECK_TOOL = "check_connection";
 export const LIST_TOOL = "list_skills";
@@ -18,11 +18,13 @@ export const SkillSchema = z.object({
   policyState: z.enum(["default", "configured", "invalid"]),
   editable: z.boolean(), reason: z.string().nullable(), revision: z.string(),
 });
-export const ListInput = z.object({ projectId: z.string().optional() });
+export const ListInput = z.object({ projectId: z.string().optional(), personalOnly: z.boolean().optional() });
+export const AddProjectInput = z.object({ path: z.string().min(1) });
 export const ListOutput = z.object({
   skills: z.array(SkillSchema),
-  projects: z.array(z.object({ id: z.string(), name: z.string() })),
+  projects: z.array(z.object({ id: z.string(), name: z.string(), cwd: z.string().optional() })),
   errors: z.array(z.string()),
+  context: z.object({ currentProjectId: z.string().nullable(), selectedProjectId: z.string().nullable(), directory: z.string().nullable() }).optional(),
 });
 export const SetInput = z.object({ skillId: z.string(), allowed: z.boolean(), expectedRevision: z.string() });
 export const SetOutput = z.object({ skill: SkillSchema, refreshGuidance: z.string() });

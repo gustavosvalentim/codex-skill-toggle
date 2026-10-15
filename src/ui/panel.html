@@ -8,10 +8,12 @@
 @media(prefers-color-scheme:dark) { :root:not([data-theme="light"]) { --bg:#181818;--fg:#eeeeee;--muted:#a6a6a6;--card:#222222;--border:#3a3a3a; } }
 * { box-sizing:border-box; } body { margin:0;padding:24px;background:var(--bg);color:var(--fg); } main { max-width:860px;margin:auto; }
 .eyebrow { font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 14px; }
-.filters { display:flex;gap:8px;flex-wrap:wrap; } input[type="search"] { flex:1;min-width:160px; } input[type="search"],select,button { font:inherit;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--fg); }
+.filters { display:flex;gap:8px;flex-wrap:wrap; } input[type="search"] { flex:1;min-width:160px; } input[type="search"],input[type="text"],select,button { font:inherit;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--fg); }
 select { appearance:none;-webkit-appearance:none;padding-right:36px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath d='m3 5 4 4 4-4' fill='none' stroke='%23909090' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center; }
 button { cursor:pointer; } button:disabled,input:disabled { opacity:.5;cursor:default; } :focus-visible { outline:3px solid #a3a3a3;outline-offset:3px; }
 #status { color:var(--muted);font-size:12px;min-height:36px;overflow-wrap:anywhere; } #status.error { color:#cc6557; }
+#project { width:220px;max-width:100%;text-overflow:ellipsis; }
+#project-context { font-size:12px;color:var(--muted);overflow-wrap:anywhere;margin:10px 0; } #project-form { margin-top:12px; } #project-form label { display:block;font-size:12px;margin-bottom:6px; } #project-path { flex:1;min-width:160px; }
 #count { color:var(--muted);font-size:12px;margin:12px 0; } .skill { display:flex;align-items:center;gap:14px;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin:8px 0; }
 .skill-content { min-width:0;flex:1; } .title { display:flex;align-items:center;gap:10px;flex-wrap:wrap; } h2 { margin:0;font-size:14px; } .title span { color:var(--muted);font-size:11px; }
 .skill p { margin:3px 0;color:var(--muted); } .description { white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px; } .path { display:block;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted); } .note { font-size:11px; }
@@ -19,7 +21,9 @@ input[role="switch"] { width:16px;height:16px;margin:0;accent-color:#909090;curs
 </style>
 </head><body><main>
 <p class="eyebrow">Skill Toggle</p>
-<div class="filters"><input id="search" type="search" aria-label="Search skills" placeholder="Search skills…"><select id="scope" aria-label="Skill scope"><option value="all">All scopes</option><option value="personal">Personal</option><option value="project">Project</option><option value="system">System</option></select><select id="project" aria-label="Project" hidden></select><button id="refresh" type="button" disabled>Refresh</button></div>
+<div class="filters"><input id="search" type="search" aria-label="Search skills" placeholder="Search skills…"><select id="scope" aria-label="Skill scope"><option value="all">All scopes</option><option value="personal">Personal</option><option value="project">Project</option><option value="system">System</option></select><select id="project" aria-label="Project"><option value="">Personal and system</option></select><button id="add-project" type="button" disabled>Add project</button><button id="refresh" type="button" disabled>Refresh</button></div>
+<form id="project-form" hidden><label for="project-path">Project folder</label><div class="filters"><input id="project-path" type="text" placeholder="/absolute/path/to/project" required><button type="submit">Add</button><button id="cancel-project" type="button">Cancel</button></div></form>
+<p id="project-context"></p>
 <p id="status" role="status" aria-live="polite">Connecting to the desktop host…</p><p id="count"></p><section id="skills" aria-label="Skills"></section>
 <footer>Changes are saved on disk. Use a fresh Codex chat to pick them up. This switch does not enable a skill disabled in Codex configuration.</footer>
 </main><script type="module">/* APP_SCRIPT */</script></body></html>

@@ -90,10 +90,10 @@ export class SkillManager {
   private pending = new Map<string, Promise<unknown>>();
   constructor(private config: ManagerConfig) {}
 
-  private async roots(projectId?: string, errors: string[] = []): Promise<Root[]> {
+  private async roots(projectId?: string | null, errors: string[] = []): Promise<Root[]> {
     const roots: Root[] = (this.config.roots ?? []).map((r) => ({ ...r, scope: "personal", projectId: null }));
     if (projectId && !this.config.projects.some((p) => p.id === projectId)) throw new SkillError("UNKNOWN_PROJECT", "Unknown configured project.");
-    for (const project of this.config.projects.filter((p) => !projectId || p.id === projectId)) {
+    for (const project of this.config.projects.filter((p) => projectId !== null && (!projectId || p.id === projectId))) {
       let cwd: string;
       try { cwd = await realpath(project.cwd); }
       catch (error) { errors.push(`${project.cwd}: ${(error as Error).message}`); continue; }
@@ -112,7 +112,7 @@ export class SkillManager {
     return roots;
   }
 
-  async list(projectId?: string): Promise<SkillList> {
+  async list(projectId?: string | null): Promise<SkillList> {
     const records = new Map<string, Record>();
     const errors: string[] = [];
     for (const root of await this.roots(projectId, errors)) {
@@ -153,7 +153,7 @@ export class SkillManager {
     // Preserve IDs from other configured project views; writes still revalidate paths and files.
     for (const [id, record] of registry) this.registry.set(id, record);
     skills.sort((a, b) => a.name.localeCompare(b.name) || a.path.localeCompare(b.path));
-    return { skills, projects: this.config.projects.map(({ id, name }) => ({ id, name })), errors };
+    return { skills, projects: this.config.projects.map(({ id, name, cwd }) => ({ id, name, cwd })), errors };
   }
 
   private async describe(record: Record): Promise<Skill> {

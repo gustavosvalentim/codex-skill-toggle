@@ -6,7 +6,7 @@ Manage automatic skill invocation from an embedded panel inside Codex. The TypeS
 
 ## Use it
 
-For routine use, open **Skill Toggle** from the desktop sidebar's app picker. Version 0.2.6 advertises a global sidebar entry as well as a conversation-panel entry. These entries open the UI directly through MCP, without sending a prompt or invoking a model. Once open, search, refresh, and toggle actions also call the local server directly.
+For routine use, open **Skill Toggle** from the desktop sidebar's app picker. Version 0.3.0 advertises a global sidebar entry as well as a conversation-panel entry. These entries open the UI directly through MCP, without sending a prompt or invoking a model. Once open, search, refresh, and toggle actions also call the local server directly.
 
 Refresh the app/plugin inventory after upgrading if the sidebar entry has not appeared. Exact placement depends on the desktop host. Native sidebar placement has not been checked through UI automation; the installed server's global entry metadata is verified.
 
@@ -33,7 +33,7 @@ npm run check
 npm test
 ```
 
-The ten automated tests cover the actual STDIO server and SDK bridge, missing policies, restoration, YAML comments and fields, file permissions, conflicts, duplicate names, symlink boundaries, project discovery and disabled-skill state.
+The twelve automated tests cover the actual STDIO server and SDK bridge, missing policies, restoration, YAML comments and fields, file permissions, conflicts, duplicate names, symlink boundaries, project discovery and disabled-skill state.
 
 To run the separate model-behavior validation using an existing Codex sign-in:
 
@@ -62,14 +62,14 @@ codex plugin add codex-skill-toggle@skill-toggle-local
 
 Refresh or restart the desktop app if its plugin picker has not updated. This plugin does not install a launcher skill. If you previously registered the development MCP server, remove that registration to avoid duplicate servers.
 
-To install from a locally built archive, extract `release/codex-skill-toggle-marketplace-0.2.6.zip` into a folder, then run:
+To install from a locally built archive, extract `release/codex-skill-toggle-marketplace-0.3.0.zip` into a folder, then run:
 
 ```sh
 codex plugin marketplace add /absolute/path/to/extracted-folder
 codex plugin add codex-skill-toggle@skill-toggle-local
 ```
 
-The marketplace archive includes `.agents/plugins/marketplace.json` and a self-contained plugin directory. `release/codex-skill-toggle-0.2.6.zip` is the portable plugin-only archive; it does not include a marketplace catalog.
+The marketplace archive includes `.agents/plugins/marketplace.json` and a self-contained plugin directory. `release/codex-skill-toggle-0.3.0.zip` is the portable plugin-only archive; it does not include a marketplace catalog.
 
 Use one source for `skill-toggle-local` at a time. To move an existing local marketplace, remove its registration before adding the new location.
 
@@ -79,7 +79,13 @@ This repository distributes a local plugin; it is not listed in the public plugi
 
 ## Configure projects and roots
 
-Without configuration, discovery uses `~/.agents/skills` and `~/.codex/skills`. Symlinked roots are supported. Identical resolved skill paths are deduplicated, while skills sharing a name remain distinct.
+Opened from a saved local conversation, the manager attempts to resolve that chat's working directory from host-provided MCP `threadId` metadata. It uses a local Codex app-server `thread/read` call with `includeTurns: false`; no model turn or chat messages are loaded. Automatic detection requires a repository ancestor or a `.agents/skills` folder. Ephemeral/internal app chats and unresolved or projectless chats default to Personal/System only.
+
+The global sidebar defaults to Personal/System. Use **Add project** to enter an absolute local folder path, then select a saved folder in the Project menu. The selected path appears below the controls. Folder choices are remembered in `$CODEX_HOME/skill-toggle/projects.json` (default `~/.codex/skill-toggle/projects.json`); the active selection stays local to each panel. Choose **Personal and system** to exclude project skills, or the current-chat option to return to automatic detection. A refresh rechecks the chat directory after worktree changes.
+
+Automatic detection is a Codex desktop integration and can be unavailable for new/unsaved chats, remote chats, or other MCP hosts. The explicit folder picker remains available. The helper uses the macOS app's bundled CLI when present, then `codex` on PATH. Set `SKILL_TOGGLE_CODEX_BIN` to select an executable explicitly. A projectless chat is not assigned a project just because it has a generated working directory.
+
+Without configuration, personal discovery uses `~/.agents/skills` and `~/.codex/skills`. Symlinked roots are supported. Identical resolved skill paths are deduplicated, while skills sharing a name remain distinct.
 
 For project discovery in a standalone development server, create a local JSON config based on `config.example.json`, replacing the example path. Register with:
 
@@ -98,18 +104,19 @@ An optional `roots` array replaces the default personal roots:
 }
 ```
 
-Only configured project IDs are accepted from the UI. Changes to this configuration require an MCP server restart. The plugin defaults to personal roots. Project configuration for the packaged plugin is not exposed in a settings UI yet; use a standalone development registration if you need the explicit `--config` argument, and disable the plugin to avoid duplicate servers.
+Listing accepts registered project IDs, which come from configured folders, explicit folder selection, or detected chat context. Only the app-only `add_project` tool accepts a folder path, validates it as an existing absolute directory, and registers it. Custom `--config` registrations keep folder additions in memory; the packaged plugin persists explicit folder choices. Changes to custom configuration require a server restart.
 
 ## Tools
 
 - `open_skill_toggle`: list skills and present the embedded manager.
-- `list_skills`: rediscover configured roots, optionally filtered by project ID.
+- `list_skills`: list personal/system skills plus the selected or detected project; `personalOnly` excludes project skills.
+- `add_project`: app-only folder registration and selection; does not change skill policies.
 - `set_implicit_invocation`: save a boolean policy using a skill ID and expected revision.
 - `check_connection`: UI-only diagnostic used by the bridge test.
 
 Skill IDs derive from canonical paths. Writes reject stale revisions, preserve unrelated YAML fields and comments, and replace files atomically. Writes in one server are serialized per skill. There remains a narrow race with unrelated external editors between the final revision check and rename; this is not filesystem-wide compare-and-swap.
 
-Enablement badges read path-based entries from the user and selected project Codex config. They are not a complete introspection of every host profile, administrator policy, or live runtime override.
+Enablement checks read path-based entries from the user and selected project Codex config. They are not a complete introspection of every host profile, administrator policy, or live runtime override.
 
 ## Remove
 

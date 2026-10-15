@@ -108,8 +108,13 @@ test("project discovery stops at the repo root and reports unavailable projects 
     return { roots: [{ path: skills, writable: true }], projects: [{ id: "project", name: "Fixture project", cwd }, { id: "missing", name: "Missing project", cwd: join(root, "absent") }] };
   });
   await f.skill("personal-fixture");
-  const all = await f.list();
-  assert.equal(all.skills.length, 2); assert.equal(all.errors.length, 1);
+  const global = await f.list();
+  assert.equal(global.skills.length, 1); assert.equal(global.errors.length, 0);
+  const selected = await f.client.callTool({ name: "list_skills", arguments: { projectId: "project" } });
+  const all = selected.structuredContent;
+  assert.equal(all.skills.length, 2); assert.equal(all.errors.length, 0);
+  const missing = await f.client.callTool({ name: "list_skills", arguments: { projectId: "missing" } });
+  assert.equal(missing.structuredContent.skills.length, 1); assert.equal(missing.structuredContent.errors.length, 1);
   assert.equal(all.skills.find((s) => s.name === "personal-fixture").scope, "personal");
   const project = all.skills.find((s) => s.name === "project-fixture");
   assert.equal(project.scope, "project"); assert.equal(project.projectId, "project"); assert.equal(project.enabled, false);

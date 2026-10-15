@@ -2,12 +2,24 @@ import { readFile } from "node:fs/promises";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
-import { APP_NAME, APP_VERSION, CHECK_TOOL, ConnectionInput, ConnectionOutput, OPEN_TOOL, UI_URI, LIST_TOOL, SET_TOOL, ListInput, ListOutput, SetInput, SetOutput, REFRESH_GUIDANCE } from "../shared.js";
+import { APP_NAME, APP_VERSION, CHECK_TOOL, ConnectionInput, ConnectionOutput, AddProjectInput, OPEN_TOOL, UI_URI, LIST_TOOL, SET_TOOL, ListInput, ListOutput, SetInput, SetOutput, REFRESH_GUIDANCE } from "../shared.js";
+import { Projects, projectStore } from "./projects.js";
 import { loadConfig, SkillError, SkillManager } from "./skills.js";
 
 const configIndex = process.argv.indexOf("--config");
 if (configIndex >= 0 && !process.argv[configIndex + 1]) throw new Error("--config requires an absolute configuration path.");
-const manager = new SkillManager(await loadConfig(configIndex >= 0 ? process.argv[configIndex + 1] : undefined));
+const config = await loadConfig(configIndex >= 0 ? process.argv[configIndex + 1] : undefined);
+const projects = new Projects(config, configIndex >= 0 ? null : projectStore());
+await projects.init();
+const manager = new SkillManager(config);
+async function listSkills(input: { projectId?: string; personalOnly?: boolean }, threadId: unknown) {
+  const current = await projects.current(threadId);
+  const selectedId = input.personalOnly ? null : input.projectId ?? current?.id ?? null;
+  const data = await manager.list(selectedId);
+  data.errors.push(...projects.errors);
+  const selected = config.projects.find((p) => p.id === selectedId);
+  return { ...data, context: { currentProjectId: current?.id ?? null, selectedProjectId: selectedId, directory: selected?.cwd ?? null } };
+}
 const icons = [{ src: `data:image/svg+xml;base64,${(await readFile(new URL("./icon.svg", import.meta.url))).toString("base64")}`, mimeType: "image/svg+xml", sizes: ["128x128"] }];
 const server = new McpServer(
   { name: "codex-skill-toggle", title: APP_NAME, version: APP_VERSION, icons },
@@ -28,8 +40,8 @@ registerAppTool(server, OPEN_TOOL, {
   title: APP_NAME, description: "Open the embedded skill manager. Listing does not modify skills.",
   inputSchema: ListInput.shape, outputSchema: ListOutput.shape, annotations: readOnly,
   _meta: { ui: { resourceUri: UI_URI }, "openai/outputTemplate": UI_URI, "openai/ui": { entrypoints: [{ type: "global" }, { type: "thread" }] } },
-}, async ({ projectId }) => {
-  try { return { content: [{ type: "text" as const, text: "Skill list returned; the desktop host presents the manager." }], structuredContent: await manager.list(projectId), _meta: { ui: { resourceUri: UI_URI }, "openai/outputTemplate": UI_URI } }; }
+}, async (input, extra) => {
+  try { return { content: [{ type: "text" as const, text: "Skill list returned; the desktop host presents the manager." }], structuredContent: await listSkills(input, extra._meta?.threadId), _meta: { ui: { resourceUri: UI_URI }, "openai/outputTemplate": UI_URI } }; }
   catch (error) { return errorResult(error); }
 });
 
@@ -37,9 +49,21 @@ server.registerTool(LIST_TOOL, {
   title: "List skills", description: "List skills in configured personal and project roots, with invocation policy and editability.",
   inputSchema: ListInput.shape, outputSchema: ListOutput.shape, annotations: readOnly,
   _meta: { ui: { visibility: ["model", "app"] } },
-}, async ({ projectId }) => {
-  try { const data = await manager.list(projectId); return { content: [{ type: "text" as const, text: `Found ${data.skills.length} skills.` }], structuredContent: data }; }
+}, async (input, extra) => {
+  try { const data = await listSkills(input, extra._meta?.threadId); return { content: [{ type: "text" as const, text: `Found ${data.skills.length} skills.` }], structuredContent: data }; }
   catch (error) { return errorResult(error); }
+});
+
+server.registerTool("add_project", {
+  title: "Add project folder", description: "Remember an explicitly selected local project folder for the manager.",
+  inputSchema: AddProjectInput.shape, outputSchema: ListOutput.shape,
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  _meta: { ui: { visibility: ["app"] } },
+}, async ({ path }, extra) => {
+  try {
+    const project = await projects.add(path);
+    return { content: [{ type: "text" as const, text: "Project folder selected." }], structuredContent: await listSkills({ projectId: project.id }, extra._meta?.threadId) };
+  } catch (error) { return errorResult(error); }
 });
 
 server.registerTool(SET_TOOL, {

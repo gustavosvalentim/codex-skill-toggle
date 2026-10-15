@@ -66,3 +66,9 @@ Native sidebar placement has not been visually verified because automation canno
 ## Launcher removal — version 0.2.2
 
 Removed the bundled launcher skill from source and both distributable archives. Installed version 0.2.2. Fresh app-server `skills/list` with forced reload returns no Skill Toggle launcher. MCP discovery still reports the plugin-owned server without an error, with both global and thread launch entries. TypeScript checks and all ten automated tests pass, including archive checks for launcher absence. Existing user skill policies were not changed. Native sidebar placement remains visually unverified.
+
+## Project context — version 0.3.0
+
+Twelve protocol/persistence tests pass. New cases use an isolated fake app-server to verify two independent chat projects, internal/ephemeral/missing/projectless fallbacks, personal-only selection, explicit override, folder validation, persisted folder registration, global defaults after restart, and project-policy writes. The real bundled runtime was separately verified to attach threadId metadata and return a saved chat's cwd through metadata-only thread/read. The completed server also passed a combined real-runtime check: host-style threadId request metadata resolved a real saved chat through the bundled app-server and selected that chat's directory. Native conversation-menu launch has not yet been validated end to end.
+
+A temporary browser harness rendered the production panel and forwarded its bridge calls to the real STDIO server. Adding a disposable project displayed its path and project-labeled skill; switching that fixture off and back on succeeded. Existing user skill policies were not changed.
