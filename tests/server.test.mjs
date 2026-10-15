@@ -18,7 +18,7 @@ test("STDIO server exposes an embedded resource and answers validated connection
   const launch = tools.find((tool) => tool.name === "open_skill_toggle");
   assert.ok(launch);
   assert.deepEqual(launch._meta["openai/ui"].entrypoints, [{ type: "global" }, { type: "thread" }]);
-  assert.equal(launch._meta.ui.resourceUri, "ui://skill-toggle/manager-v3.html");
+  assert.equal(launch._meta.ui.resourceUri, "ui://skill-toggle/manager-v4.html");
   assert.equal(launch.annotations.readOnlyHint, true);
   assert.deepEqual(tools.find((tool) => tool.name === "check_connection")._meta.ui.visibility, ["app"]);
 

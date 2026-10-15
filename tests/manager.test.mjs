@@ -74,6 +74,9 @@ test("duplicate names have separate IDs; symlink escapes and bundled skills cann
   await mkdir(join(bundled, "test")); await writeFile(join(bundled, "test/SKILL.md"), '---\nname: bundled\ndescription: Bundled fixture.\n---\n');
   const data = await f.list(); const same = data.skills.filter((s) => s.name === "same");
   assert.equal(same.length, 2); assert.notEqual(same[0].id, same[1].id);
+  assert.ok(same.every((s) => s.scope === "personal"));
+  assert.equal(data.skills.find((s) => s.name === "bundled").scope, "system");
+  assert.equal(data.skills.find((s) => s.name === "outside").scope, "personal");
   for (const name of ["outside", "bundled"]) { const s = data.skills.find((s) => s.name === name); assert.equal(s.editable, false); assert.equal((await f.set(s, false)).isError, true); }
   assert.equal((await f.client.callTool({ name: "set_implicit_invocation", arguments: { skillId: "unknown", allowed: false, expectedRevision: "missing" } })).isError, true);
 });
@@ -107,6 +110,7 @@ test("project discovery stops at the repo root and reports unavailable projects 
   await f.skill("personal-fixture");
   const all = await f.list();
   assert.equal(all.skills.length, 2); assert.equal(all.errors.length, 1);
+  assert.equal(all.skills.find((s) => s.name === "personal-fixture").scope, "personal");
   const project = all.skills.find((s) => s.name === "project-fixture");
   assert.equal(project.scope, "project"); assert.equal(project.projectId, "project"); assert.equal(project.enabled, false);
   const unknown = await f.client.callTool({ name: "list_skills", arguments: { projectId: "unknown" } });

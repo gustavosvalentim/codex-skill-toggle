@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const APP_NAME = "Skill Toggle";
-export const APP_VERSION = "0.2.5";
-export const UI_URI = "ui://skill-toggle/manager-v3.html";
+export const APP_VERSION = "0.2.6";
+export const UI_URI = "ui://skill-toggle/manager-v4.html";
 export const OPEN_TOOL = "open_skill_toggle";
 export const CHECK_TOOL = "check_connection";
 export const LIST_TOOL = "list_skills";
@@ -13,7 +13,7 @@ export const ConnectionInput = z.object({ nonce: z.string().min(1).max(128) });
 export const ConnectionOutput = z.object({ nonce: z.string(), server: z.literal("codex-skill-toggle"), version: z.string(), checkedAt: z.string().datetime() });
 export const SkillSchema = z.object({
   id: z.string(), name: z.string(), description: z.string(), path: z.string(),
-  scope: z.enum(["personal", "project"]), projectId: z.string().nullable(),
+  scope: z.enum(["personal", "project", "system"]), projectId: z.string().nullable(),
   enabled: z.boolean().nullable(), allowImplicitInvocation: z.boolean().nullable(),
   policyState: z.enum(["default", "configured", "invalid"]),
   editable: z.boolean(), reason: z.string().nullable(), revision: z.string(),

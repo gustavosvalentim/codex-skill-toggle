@@ -6,11 +6,13 @@ Manage automatic skill invocation from an embedded panel inside Codex. The TypeS
 
 ## Use it
 
-For routine use, open **Skill Toggle** from the desktop sidebar's app picker. Version 0.2.5 advertises a global sidebar entry as well as a conversation-panel entry. These entries open the UI directly through MCP, without sending a prompt or invoking a model. Once open, search, refresh, and toggle actions also call the local server directly.
+For routine use, open **Skill Toggle** from the desktop sidebar's app picker. Version 0.2.6 advertises a global sidebar entry as well as a conversation-panel entry. These entries open the UI directly through MCP, without sending a prompt or invoking a model. Once open, search, refresh, and toggle actions also call the local server directly.
 
 Refresh the app/plugin inventory after upgrading if the sidebar entry has not appeared. Exact placement depends on the desktop host. Native sidebar placement has not been checked through UI automation; the installed server's global entry metadata is verified.
 
 The plugin does not bundle a launcher skill. You can still ask Codex to call `open_skill_toggle`, but that conversational route consumes a model turn.
+
+Scope labels and the scope filter distinguish **Personal**, **Project**, and **System** skills. Skills inside `.system` folders are labeled System and remain read-only.
 
 Search for a skill and change its “Allow automatic invocation” switch:
 
@@ -60,14 +62,14 @@ codex plugin add codex-skill-toggle@skill-toggle-local
 
 Refresh or restart the desktop app if its plugin picker has not updated. This plugin does not install a launcher skill. If you previously registered the development MCP server, remove that registration to avoid duplicate servers.
 
-To install from a locally built archive, extract `release/codex-skill-toggle-marketplace-0.2.5.zip` into a folder, then run:
+To install from a locally built archive, extract `release/codex-skill-toggle-marketplace-0.2.6.zip` into a folder, then run:
 
 ```sh
 codex plugin marketplace add /absolute/path/to/extracted-folder
 codex plugin add codex-skill-toggle@skill-toggle-local
 ```
 
-The marketplace archive includes `.agents/plugins/marketplace.json` and a self-contained plugin directory. `release/codex-skill-toggle-0.2.5.zip` is the portable plugin-only archive; it does not include a marketplace catalog.
+The marketplace archive includes `.agents/plugins/marketplace.json` and a self-contained plugin directory. `release/codex-skill-toggle-0.2.6.zip` is the portable plugin-only archive; it does not include a marketplace catalog.
 
 Use one source for `skill-toggle-local` at a time. To move an existing local marketplace, remove its registration before adding the new location.
 

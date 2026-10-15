@@ -177,7 +177,7 @@ export class SkillManager {
       }
     } catch (error) { editable = false; reason = (error as Error).message; }
     if (policy.error) { editable = false; reason = policy.error; }
-    return { id: hash(record.directory), name: data.name, description: data.description, path: manifest, scope: record.root.scope, projectId: record.root.projectId, enabled: await enabledAt(manifest, record.root.cwd), allowImplicitInvocation: policy.allowed, policyState: policy.state, editable, reason, revision: policy.revision };
+    return { id: hash(record.directory), name: data.name, description: data.description, path: manifest, scope: record.directory.split(sep).includes(".system") ? "system" : record.root.scope, projectId: record.root.projectId, enabled: await enabledAt(manifest, record.root.cwd), allowImplicitInvocation: policy.allowed, policyState: policy.state, editable, reason, revision: policy.revision };
   }
 
   async set(id: string, allowed: boolean, expectedRevision: string): Promise<Skill> {
