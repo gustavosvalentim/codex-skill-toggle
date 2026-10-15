@@ -1,0 +1,9 @@
+{
+  "projects": [
+    {
+      "id": "example-project",
+      "name": "Example project",
+      "cwd": "/absolute/path/to/project"
+    }
+  ]
+}

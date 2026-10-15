@@ -1,0 +1,39 @@
+{
+  "binary": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+  "version": "codex-cli 0.160.1",
+  "cases": [
+    {
+      "label": "automatic-on",
+      "allowed": true,
+      "explicit": false,
+      "code": 0,
+      "response": "LANTERN-e959e2a8-1681-4bbd-8451-665dd4d62d82",
+      "foundMarker": true
+    },
+    {
+      "label": "automatic-off",
+      "allowed": false,
+      "explicit": false,
+      "code": 0,
+      "response": "UNKNOWN",
+      "foundMarker": false
+    },
+    {
+      "label": "explicit-off",
+      "allowed": false,
+      "explicit": true,
+      "code": 0,
+      "response": "LANTERN-6299e81f-e457-4c4d-b3cf-b90ae7cf8f27",
+      "foundMarker": true
+    },
+    {
+      "label": "automatic-restored",
+      "allowed": true,
+      "explicit": false,
+      "code": 0,
+      "response": "LANTERN-8701b9f4-19f1-42ad-8663-41c3b2c8616d",
+      "foundMarker": true
+    }
+  ],
+  "passed": true
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "codex-skill-toggle",
+  "version": "0.2.5",
+  "description": "Manage automatic skill invocation from an embedded Codex panel.",
+  "extensions": {
+    "com.openai": {
+      "requires_local_executor": true,
+      "interface": {
+        "displayName": "Skill Toggle",
+        "shortDescription": "Control automatic skill invocation",
+        "longDescription": "Inspect local skills and choose whether Codex can invoke them automatically. Settings are saved locally with revision checks. Requires Node.js 22 or newer.",
+        "category": "Productivity",
+        "capabilities": [
+          "Read",
+          "Write"
+        ],
+        "logo": "./assets/icon.svg",
+        "composerIcon": "./assets/icon-outline.svg"
+      }
+    }
+  }
+}

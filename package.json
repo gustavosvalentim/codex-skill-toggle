@@ -1,0 +1,38 @@
+{
+  "name": "codex-skill-toggle",
+  "version": "0.2.5",
+  "private": true,
+  "type": "module",
+  "description": "Embedded Codex MCP App for controlling skill invocation policy",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "tsc --noEmit",
+    "start": "node dist/server.js",
+    "test": "npm run package:plugin && node --test tests/*.test.mjs",
+    "validate:policy": "node scripts/validate-policy.mjs",
+    "package:plugin": "npm run build && node scripts/package-plugin.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "1.7.5",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "smol-toml": "^1.9.1",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gustavosvalentim/codex-skill-toggle.git"
+  },
+  "homepage": "https://github.com/gustavosvalentim/codex-skill-toggle#readme",
+  "bugs": {
+    "url": "https://github.com/gustavosvalentim/codex-skill-toggle/issues"
+  }
+}

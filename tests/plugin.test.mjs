@@ -1,0 +1,58 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { fileURLToPath } from "node:url";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+
+test("the installed plugin bundle runs outside the source tree without node_modules", async (t) => {
+  const temporary = await mkdtemp(join(tmpdir(), "skill-toggle-plugin-test-"));
+  const plugin = join(temporary, "plugin");
+  await cp(fileURLToPath(new URL("../dist/plugin", import.meta.url)), plugin, { recursive: true });
+  await mkdir(join(temporary, "skills"));
+  const config = join(temporary, "config.json");
+  await writeFile(config, JSON.stringify({ roots: [{ path: join(temporary, "skills"), writable: true }], projects: [] }));
+  const manifest = JSON.parse(await readFile(join(plugin, "plugin.json"), "utf8"));
+  assert.equal(manifest.name, "codex-skill-toggle");
+  assert.equal(manifest.extensions["com.openai"].requires_local_executor, true);
+  await assert.rejects(readFile(join(plugin, "skills/skill-toggle/SKILL.md")), { code: "ENOENT" });
+  const servers = JSON.parse(await readFile(join(plugin, "mcp.json"), "utf8"));
+  const entry = servers.mcpServers["codex-skill-toggle"];
+  assert.equal(entry.type, "stdio");
+  const resolve = (value) => value.replaceAll("${PLUGIN_ROOT}", plugin);
+  const transport = new StdioClientTransport({ command: process.execPath, args: [...entry.args.map(resolve), "--config", config], cwd: resolve(entry.cwd), stderr: "pipe" });
+  const client = new Client({ name: "plugin-install-test", version: "1" }, {});
+  t.after(async () => { await client.close(); await rm(temporary, { recursive: true, force: true }); });
+  await client.connect(transport);
+  const tools = await client.listTools();
+  const launch = tools.tools.find((tool) => tool.name === "open_skill_toggle");
+  assert.ok(launch);
+  const resource = await client.readResource({ uri: launch._meta.ui.resourceUri });
+  assert.equal(resource.contents[0].mimeType, "text/html;profile=mcp-app");
+  const result = await client.callTool({ name: launch.name, arguments: {} });
+  assert.equal(result.isError, undefined);
+  assert.deepEqual(result.structuredContent.skills, []);
+});
+
+test("the marketplace archive contains a resolvable relative plugin source", async (t) => {
+  const { execFileSync } = await import("node:child_process");
+  const { resolve, relative } = await import("node:path");
+  const temporary = await mkdtemp(join(tmpdir(), "skill-toggle-marketplace-test-"));
+  t.after(() => rm(temporary, { recursive: true, force: true }));
+  const manifestVersion = JSON.parse(await readFile(new URL("../plugin/plugin.json", import.meta.url), "utf8")).version;
+  const archive = fileURLToPath(new URL(`../release/codex-skill-toggle-marketplace-${manifestVersion}.zip`, import.meta.url));
+  execFileSync("unzip", ["-q", archive, "-d", temporary]);
+  const catalog = JSON.parse(await readFile(join(temporary, ".agents/plugins/marketplace.json"), "utf8"));
+  assert.equal(catalog.name, "skill-toggle-local");
+  const entry = catalog.plugins[0];
+  assert.equal(entry.source.source, "local");
+  assert.ok(entry.source.path.startsWith("./"));
+  const root = resolve(temporary, entry.source.path);
+  assert.ok(!relative(temporary, root).startsWith(".."));
+  const manifest = JSON.parse(await readFile(join(root, "plugin.json"), "utf8"));
+  assert.equal(manifest.name, entry.name);
+  assert.ok((await readFile(join(root, "server/server.mjs"), "utf8")).length > 1000);
+  await assert.rejects(readFile(join(root, "skills/skill-toggle/SKILL.md")), { code: "ENOENT" });
+});
