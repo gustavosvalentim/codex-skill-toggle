@@ -32,9 +32,10 @@ async function expand() {
 function accept(next: SkillList) {
   data = next;
   const current = data.projects.find((p) => p.id === data.context?.currentProjectId);
-  project.replaceChildren(new Option(current ? `Current chat: ${current.name}` : "Personal and system", ""),
-    ...(current ? [new Option("Personal and system", "__personal")] : []),
+  project.replaceChildren(new Option(current ? `Current chat: ${current.name}` : "No project", ""),
+    ...(current ? [new Option("No project", "__personal")] : []),
     ...data.projects.map((p) => new Option(p.cwd ? `${p.name} — ${p.cwd}` : p.name, p.id)));
+  project.hidden = data.projects.length === 0;
   project.value = selection;
   if (project.selectedIndex < 0) { selection = ""; project.value = ""; }
   projectContext.textContent = data.context?.directory ? `Project: ${data.context.directory}` : "Select a project folder to include project skills.";

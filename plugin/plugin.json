@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "codex-skill-toggle",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Manage automatic skill invocation from an embedded Codex panel.",
   "extensions": {
     "com.openai": {
